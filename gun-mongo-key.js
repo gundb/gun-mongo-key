@@ -52,9 +52,11 @@ Flint.register(new KeyValAdapter({
      */
     get: function(key, field, stream) {
         if (this.initialized) {
-            this._getField(key, field, stream);
-        } else {
-            this._getNode(key, stream);
+            if (field) {
+                this._getField(key, field, stream);
+            } else {
+                this._getNode(key, stream);
+            }   
         }
     },
 
