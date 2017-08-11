@@ -1,4 +1,4 @@
-const {Flint, KeyValAdapter, Mixins} = require('gun-flint');
+const {KeyValAdapter, Mixins} = require('gun-flint');
 const Mongojs = require('mongojs');
 
 function getCollection(keyField) {
@@ -9,7 +9,7 @@ function getKeyField(key, field) {
     return field ? key + '_' + field : key;
 }
 
-Flint.register(new KeyValAdapter({
+var gunMongoKey = new KeyValAdapter({
     initialized: false,
     written: 0,
     mixins: [
@@ -72,7 +72,7 @@ Flint.register(new KeyValAdapter({
     _getField: function(key, field, stream) {
 
         // Find a single field
-        this._streamResults(this._getCollection(key).find({_id: getKeyField(key, field)}).limit(1), stream);
+        this._streamResults(this._getCollection().find({_id: getKeyField(key, field)}).limit(1), stream);
     },
 
     /**
@@ -86,7 +86,7 @@ Flint.register(new KeyValAdapter({
     _getNode: function(key, stream) {
 
         // Find an entire nodes key:val, stream results
-        this._streamResults(this._getCollection(key).find({key}), stream);
+        this._streamResults(this._getCollection().find({key}), stream);
     },
 
     /**
@@ -100,6 +100,8 @@ Flint.register(new KeyValAdapter({
     _streamResults: function(result, streamOut) {
         let hasResult = false;
         let queryErr = null;
+        let internalErr = this.errors.internal;
+        let notFount = this.errors.lost;
         result
             .on('data', function(data) {
                 if (data) {
@@ -112,10 +114,14 @@ Flint.register(new KeyValAdapter({
             })
             .on('end', function(err) {
                 queryErr = err;
-                streamOut.done(queryErr ? this.errors.internal : null);
+                if (!err && !hasResult) {
+                    streamOut.done(notFount);
+                } else {
+                    streamOut.done(queryErr ? internalErr : null);
+                }
             })
             .on('close', function() {
-                streamOut.done(queryErr ? this.errors.internal : null);
+                streamOut.done(queryErr ? internalErr : null);
             });
     },
 
@@ -127,7 +133,6 @@ Flint.register(new KeyValAdapter({
      */
     put: function(batch, done) {
         if (this.initialized && batch.length) {
-
             // Essential info
             let written = 0;
             let writeErr = null;
@@ -168,4 +173,6 @@ Flint.register(new KeyValAdapter({
     _getCollection(key) {
         return this.db.collection(this.collection);
     }
-}));
+});
+
+module.exports = gunMongoKey;
