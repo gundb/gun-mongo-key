@@ -2,7 +2,7 @@
   "name": "gun-mongo-key",
   "version": "0.0.1",
   "description": "A Mongo key:value adapter for Gunjs",
-  "main": "gun-mongo-key.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sjones6/gun-mongo-key.git"
@@ -16,6 +16,9 @@
   ],
   "author": "sjones6",
   "license": "MIT",
+  "scripts": {
+    "test": "flint test ./gun-mongo-key.js --opt=./flint-opt.js"
+  },
   "bugs": {
     "url": "https://github.com/sjones6/gun-mongo-key/issues"
   },
@@ -23,9 +26,5 @@
   "dependencies": {
     "gun-flint": "^0.0",
     "mongojs": "^2.4.0"
-  },
-  "devDependencies": {
-    "expect": "^1.20.2",
-    "mocha": "^3.0.0"
   }
 }
