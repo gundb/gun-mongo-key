@@ -28,7 +28,7 @@ require('gun-mongo-key');
 // Instantiate Gun
 const gun = new Gun({
     file: false,
-    server: httpServer,
+    web: httpServer,
 
     // The following are defaults. You can supply `true` to use all defaults
     mongo: {
