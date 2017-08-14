@@ -11,10 +11,6 @@ function getKeyField(key, field) {
 
 var gunMongoKey = new KeyValAdapter({
     initialized: false,
-    written: 0,
-    mixins: [
-        Mixins.ResultStreamMixin,
-    ],
     
     /**
      * Handle Initialization options passed during Gun initialization of <code>opt</code> calls.
@@ -36,6 +32,10 @@ var gunMongoKey = new KeyValAdapter({
             let query = mongo.query ? '?' + mongo.query : '';
             this.collection = mongo.collection || 'gun_mongo_key';
             this.db = Mongojs(`mongodb://${host}:${port}/${database}${query}`);
+
+            // Indexes
+            this.indexInBackground = mongo.indexInBackground || false;
+            this._ensureIndex();
         } else {
             this.initialized = false
         }
@@ -101,12 +101,12 @@ var gunMongoKey = new KeyValAdapter({
         let hasResult = false;
         let queryErr = null;
         let internalErr = this.errors.internal;
-        let notFount = this.errors.lost;
+        let notFound = this.errors.lost;
         result
             .on('data', function(data) {
                 if (data) {
                     hasResult = true;
-                    streamOut.in(data);
+                    streamOut(null, data);
                 }
             })
             .on('error', function(err) {
@@ -115,13 +115,13 @@ var gunMongoKey = new KeyValAdapter({
             .on('end', function(err) {
                 queryErr = err;
                 if (!err && !hasResult) {
-                    streamOut.done(notFount);
+                    streamOut(notFound);
                 } else {
-                    streamOut.done(queryErr ? internalErr : null);
+                    streamOut(queryErr ? internalErr : null);
                 }
             })
             .on('close', function() {
-                streamOut.done(queryErr ? internalErr : null);
+                streamOut(queryErr ? internalErr : null);
             });
     },
 
@@ -153,7 +153,7 @@ var gunMongoKey = new KeyValAdapter({
             // Since the batch may contain updates for more than one node, we key each bulk update
             // to the node key and the corresponding collection.
             batch.forEach(node => {
-                let bulk = bulkBatch[node.key] = bulkBatch[node.key] || this._getCollection(node.key).initializeOrderedBulkOp();
+                let bulk = bulkBatch[node.key] = bulkBatch[node.key] || this._getCollection().initializeOrderedBulkOp();
                 bulk.find({_id: getKeyField(node.key, node.field)}).upsert().replaceOne(node);
             });
 
@@ -172,7 +172,21 @@ var gunMongoKey = new KeyValAdapter({
      */
     _getCollection(key) {
         return this.db.collection(this.collection);
-    }
+    },
+
+    /**
+     * Ensure indexes are created on the proper fields
+     * 
+     * @return {void}
+     */
+    _ensureIndex() {
+        this._getCollection().createIndex({
+            key: 1,
+            field: 1
+        }, {
+            background: this.indexInBackground
+        });
+   }
 });
 
 module.exports = gunMongoKey;
