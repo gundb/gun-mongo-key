@@ -1,4 +1,4 @@
-# Gun-Mongo
+# Gun-Mongo-Key
 
 A key:value MongoDB adapter for GunJS.
 
@@ -46,9 +46,10 @@ const gun = new Gun({
 Tests run on a 2012 Macbook Pro, 2.5 GHz Intel Core i5, 16 GB RAM.
 
 **Starting with empty collection**:
-* Write 10000 nodes: : 11579ms; 11.579s; 1.1579 ms/node.
-* Read 10000 nodes: : 18681ms; 18.681s; 1.8681 ms/node.
-* Update 10000 nodes: : 12798ms; 12.798s; 1.2798 ms/node.
+* Write 10000 nodes: : 11629ms; 11.629s; 1.1629 ms/node.
+* Read 10000 nodes: : 19246ms; 19.246s; 1.9246 ms/node.
+* Update 10000 nodes: : 11433ms; 11.433s; 1.1433 ms/node.
+* Update single field on 10000 nodes: : 5380ms; 5.38s; 0.538 ms/node.
 
 **1.2 million existing documents in the collection**:
 * Write 10,000 nodes: : 11,858ms; 11.858s; 1.1858 ms/node.
