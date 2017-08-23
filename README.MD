@@ -52,24 +52,33 @@ const gun = new Gun({
 });
 ```
 
-## Chunking Results
-
-For optimal performance, GunMongoKey will chunk key:value results into groups of 250 to stream back to Gun. The default is set fairly high at 250. If you anticipate that nodes might contain large values (e.g., 250 key:value pairs might overwhelm the memory), then you may want to set this lower. If all of the values are small (even if the node itself has many keys), consider setting this higher.
-
 # Performance
 
 Tests run on a 2012 Macbook Pro, 2.5 GHz Intel Core i5, 16 GB RAM.
 
-**Starting with empty collection**:
-* Write 10000 nodes: : 11629ms; 11.629s; 1.1629 ms/node.
-* Read 10000 nodes: : 19246ms; 19.246s; 1.9246 ms/node.
-* Update 10000 nodes: : 11433ms; 11.433s; 1.1433 ms/node.
-* Update single field on 10000 nodes: : 5380ms; 5.38s; 0.538 ms/node.
+**Small Nodes: 10 Properties Each**
+* Write 10000 nodes: 25558ms; 25.558s; **2.556 ms/node**
+* Read 10000 nodes: 10365ms; 10.365s; **1.036 ms/node**
+* Full Update 10000 nodes: 22895ms; 22.895s; **2.289 ms/node**
+* Update single field on 10000 nodes: 9299ms; 9.299s; **0.930 ms/node**
 
-**1.2 million existing documents in the collection**:
-* Write 10,000 nodes: : 11,858ms; 11.858s; 1.1858 ms/node.
-* Read 10,000 nodes: : 26,289ms; 26.289s; 2.6289 ms/node.
-* Update 10,000 nodes: : 12,308ms; 12.308s; 1.2308 ms/node.
+**Medium Nodes: 1000 Properties Each**
+* Write 1000 nodes: 133160ms; 133.16s; **133.027 ms/node**
+* Read 1000 nodes: 21993ms; 21.993s; **21.971 ms/node**
+* Full 1000 nodes: 143452ms; 143.452s; **143.309 ms/node**
+* Update single field on 1000 nodes: : 1298ms; 1.298s; **1.297 ms/node**
+
+## Performance Tuning
+
+There are a few things that you can do to tune this adapter to your particular application's needs (without sharding your DB, or other measures).
+
+### Chunking Results
+
+For optimal performance, GunMongoKey will chunk key:value results into groups of 250 to stream back to Gun. The default is set fairly high at 250. If you anticipate that nodes might contain large values (e.g., 250 key:value pairs might overwhelm the memory), then you may want to set this lower. If all of the values are small (even if the node itself has many keys), consider setting this higher.
+
+### Pool Size
+
+Allowing a larger pool of connections can provide overall application speed by increasing the number of concurrent operations; however, too many connections can also have adverse effects. 
 
 # Issues & Contributing
 
