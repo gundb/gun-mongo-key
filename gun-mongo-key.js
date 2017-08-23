@@ -151,14 +151,27 @@ var gunMongoKey = new KeyValAdapter({
 
             // Handler for each bulk write success
             const bulkWritten = (err, args) => {
-                done(!args.ok ? this.errors.internal : null)
+                done((err || (args && !args.ok)) ? this.errors.internal : null)
             };
 
             // Since the batch may contain updates for more than one node, we key each bulk update
-            // to the node key and the corresponding collection.
+            // to the node key and the corresponding collection. Bulk actions can have a limit of 1000
+            let track = {}
             batch.forEach(node => {
-                let bulk = bulkBatch[node.key] = bulkBatch[node.key] || this._getCollection().initializeOrderedBulkOp();
+
+                // Acquire the bulk by it's Nodekey + write iteration for that node
+                // The iteration = number of writes for a single node / 1000
+                let iter = track[node.key] = track[node.key] || 1;
+                let bulkKey = node.key + iter;
+                let bulk = bulkBatch[bulkKey] = bulkBatch[bulkKey] || this._getCollection().initializeOrderedBulkOp();
                 bulk.find({_id: getKeyField(node.key, node.field)}).upsert().replaceOne(node);
+
+                // After that are 1000 updates queued in the bulk update,
+                // change the iteration so that the loop will get its own
+                // bulk operation.
+                if (bulkBatch[bulkKey] && bulk._currCmd.updates.length === 1000) {
+                    track[node.key]++;
+                }
             });
 
             // Once all of the bulk operations have been
