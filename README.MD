@@ -65,8 +65,14 @@ Tests run on a 2012 Macbook Pro, 2.5 GHz Intel Core i5, 16 GB RAM.
 **Medium Nodes: 1000 Properties Each**
 * Write 1000 nodes: 133160ms; 133.16s; **133.027 ms/node**
 * Read 1000 nodes: 21993ms; 21.993s; **21.971 ms/node**
-* Full 1000 nodes: 143452ms; 143.452s; **143.309 ms/node**
+* Full Update 1000 nodes: 143452ms; 143.452s; **143.309 ms/node**
 * Update single field on 1000 nodes: : 1298ms; 1.298s; **1.297 ms/node**
+
+**Large Nodes: 10,000 Properties Each**
+* Write 50 nodes: 54347ms; 54.347s; **1065.627 ms/node**
+* Read 50 nodes: 12230ms; 12.23s; **239.804 ms/node**
+* Ful Update 50 nodes: 57784ms; 57.784s; **1133.020 ms/node**
+* Update single field on 50 nodes: 185ms; 0.185s; **3.627 ms/node**
 
 ## Performance Tuning
 

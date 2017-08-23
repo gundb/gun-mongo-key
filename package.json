@@ -18,7 +18,7 @@
   "license": "MIT",
   "scripts": {
     "test": "flint test ./gun-mongo-key.js --opt=./flint-opt.js",
-    "profile": "flint profile ./gun-mongo-key.js --opt=./flint-opt.js"
+    "profile": "flint profile ./gun-mongo-key.js --opt=./flint-opt.js --skip-small --skip-medium"
   },
   "bugs": {
     "url": "https://github.com/sjones6/gun-mongo-key/issues"
