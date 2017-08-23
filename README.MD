@@ -4,15 +4,20 @@ A key:value MongoDB adapter for GunJS.
 
 # Some Considerations
 
-`gun-mongo-key` stores the each graph node's key:value (along with some metadata) in a separate document. This provides some major advantages in two areas: streaming large nodes (so that memory isn't overwhelmed) and making updates faster. The disadvantage is that creating new nodes (especially) nodes with lots of properties will be less efficient.
+`gun-mongo-key` stores the each graph node's key:value (along with some metadata) in a separate document. This provides some major advantages in two areas:
+
+* streaming large nodes (so that memory isn't overwhelmed)
+* updating single-property's at constant speed (irrespective of node size)
+
+The disadvantage is that creating new nodes (especially) nodes or entirely rewriting with lots of properties will be less efficient.
 
 If the following are true, then `gun-mongo-key` could be right for your application:
 
 1. You anticipate large nodes (e.g., a `users` node with millions of children will be streamed to Gun rather than transferred in the entirety).
-2. Nodes or node properties are updated frequently. Updates (_especially_ of large nodes) of individual properties will be faster and more efficient than full-node storage.
+2. Node properties are updated frequently. Updates (_especially_ of large nodes) of individual properties will be faster and more efficient than full-node storage.
 3. Updating existing nodes is more common/important than creating new nodes.
 
-Contrast this with [`gun-mongo`](https://github.com/sjones6/gun-mongo) which has an advantages for creating nodes. This advantage dwindles at the point where a node becomes so large that it threatens to overwhelm memory.
+Contrast this with [`gun-mongo`](https://github.com/sjones6/gun-mongo) which has an advantages for creating and updating of full nodes. This advantage dwindles at the point where a node becomes so large that it threatens to overwhelm memory.
 
 # Installation
 
@@ -36,10 +41,20 @@ const gun = new Gun({
         port: '27017',
         database: 'gun',
         collection: 'gun_mongo_key',
-        query: ''
+        query: '',
+        opt: {
+            poolSize: 25 // how large is the connection pool
+            // include any other options when initializing:
+            // See: http://mongodb.github.io/node-mongodb-native/2.2/reference/connecting/connection-settings/
+        },
+        chunkSize: 250 // see below
     }
 });
 ```
+
+## Chunking Results
+
+For optimal performance, GunMongoKey will chunk key:value results into groups of 250 to stream back to Gun. The default is set fairly high at 250. If you anticipate that nodes might contain large values (e.g., 250 key:value pairs might overwhelm the memory), then you may want to set this lower. If all of the values are small (even if the node itself has many keys), consider setting this higher.
 
 # Performance
 

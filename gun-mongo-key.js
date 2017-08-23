@@ -10,8 +10,7 @@ function getKeyField(key, field) {
 }
 
 var gunMongoKey = new KeyValAdapter({
-    initialized: false,
-    
+
     /**
      * Handle Initialization options passed during Gun initialization of <code>opt</code> calls.
      * 
@@ -31,7 +30,13 @@ var gunMongoKey = new KeyValAdapter({
             let host = mongo.host || 'localhost';
             let query = mongo.query ? '?' + mongo.query : '';
             this.collection = mongo.collection || 'gun_mongo_key';
-            this.db = Mongojs(`mongodb://${host}:${port}/${database}${query}`);
+            let connectionOpt = mongo.opt || {
+                poolSize: 25
+            };
+            this.db = Mongojs(`mongodb://${host}:${port}/${database}${query}`, null, connectionOpt);
+
+            // Streaming Chunk size
+            this.chunkSize = mongo.chunkSize || 250;
 
             // Indexes
             this.indexInBackground = mongo.indexInBackground || false;
@@ -86,7 +91,7 @@ var gunMongoKey = new KeyValAdapter({
     _getNode: function(key, stream) {
 
         // Find an entire nodes key:val, stream results
-        this._streamResults(this._getCollection().find({key}), stream);
+        this._streamResults(this._getCollection().find({key}), stream, key);
     },
 
     /**
@@ -97,16 +102,22 @@ var gunMongoKey = new KeyValAdapter({
      * 
      * @return {void}
      */
-    _streamResults: function(result, streamOut) {
+    _streamResults: function(result, streamOut, key) {
         let hasResult = false;
         let queryErr = null;
         let internalErr = this.errors.internal;
         let notFound = this.errors.lost;
+        
+        let buffer = [];
         result
             .on('data', function(data) {
                 if (data) {
                     hasResult = true;
-                    streamOut(null, data);
+                    buffer.push(data);
+                    if (buffer.length === this.chunkSize) {
+                        streamOut(null, buffer);
+                        buffer = [];
+                    }
                 }
             })
             .on('error', function(err) {
@@ -117,7 +128,7 @@ var gunMongoKey = new KeyValAdapter({
                 if (!err && !hasResult) {
                     streamOut(notFound);
                 } else {
-                    streamOut(queryErr ? internalErr : null);
+                    streamOut((queryErr ? internalErr : null), (buffer.length > 0 ? buffer : null));
                 }
             })
             .on('close', function() {
@@ -139,15 +150,8 @@ var gunMongoKey = new KeyValAdapter({
             const bulkBatch = {};
 
             // Handler for each bulk write success
-            const bulkWritten = err => {
-                written++;
-                if (!writeErr && err) {
-                    writeErr = err;
-                }
-
-                if (written === Object.keys(bulkBatch).length) {
-                    done(writeErr ? this.errors.internal : null);
-                }
+            const bulkWritten = (err, args) => {
+                done(!args.ok ? this.errors.internal : null)
             };
 
             // Since the batch may contain updates for more than one node, we key each bulk update
